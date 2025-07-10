@@ -26,6 +26,7 @@
 #include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TimeProfiler.h"
+#include <iostream>
 using namespace clang;
 
 
@@ -760,6 +761,33 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result,
   return false;
 }
 
+std::vector<clang::Token> Parser::parseREQUIRES()
+{
+  std::vector<clang::Token> Toks;
+  while (1) {
+    switch (Tok.getKind()) {
+      case tok::l_paren:
+        ConsumeParen();
+        break;
+      case tok::r_paren:
+        ConsumeParen();
+        return Toks;
+      default:
+        auto Loc = Tok.getLocation();
+        std::cout << "Token "
+                  << " at position: "
+                  << Loc.printToString(
+                      Actions.getASTContext().getSourceManager()
+                    )
+                  << std::endl;
+
+        Toks.push_back(Tok);
+        ConsumeToken();
+        break;
+    }
+  }
+}
+
 Parser::DeclGroupPtrTy
 Parser::ParseExternalDeclaration(ParsedAttributes &Attrs,
                                  ParsedAttributes &DeclSpecAttrs,
@@ -774,6 +802,14 @@ Parser::ParseExternalDeclaration(ParsedAttributes &Attrs,
 
   Decl *SingleDecl = nullptr;
   switch (Tok.getKind()) {
+  case tok::kw_REQUIRES: {
+    ConsumeToken();
+    auto Toks = parseREQUIRES();
+    printf("Parsed %i tokens in REQUIRES\n", (int)Toks.size());
+    // for (auto &Tok : Toks)
+    //   std::cout << Tok << " ";
+    goto dont_know;
+  }
   case tok::annot_pragma_vis:
     HandlePragmaVisibility();
     return nullptr;

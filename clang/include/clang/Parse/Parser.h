@@ -866,6 +866,8 @@ private:
   void SuggestParentheses(SourceLocation Loc, unsigned DK,
                           SourceRange ParenRange);
 
+  std::vector<clang::Token> parseREQUIRES(void);
+
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
 

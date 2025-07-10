@@ -764,27 +764,37 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result,
 std::vector<clang::Token> Parser::parseREQUIRES()
 {
   std::vector<clang::Token> Toks;
+  int parenCount = 0;
+  // An opening paren must follow.
+  if (Tok.getKind() == tok::l_paren) {
+    Toks.push_back(Tok);
+    ConsumeParen();
+    parenCount++;
+  } else {
+    // Warn. But we should error out
+    Diag(Tok, diag::err_expected) << tok::l_paren;
+    ConsumeToken();
+    return Toks;
+  }
+
   while (1) {
+    Toks.push_back(Tok); // Always keep the token, including enclosing parens.
     switch (Tok.getKind()) {
       case tok::l_paren:
+        parenCount++;
         ConsumeParen();
         break;
       case tok::r_paren:
         ConsumeParen();
-        return Toks;
-      default:
-        auto Loc = Tok.getLocation();
-        std::cout << "Token "
-                  << " at position: "
-                  << Loc.printToString(
-                      Actions.getASTContext().getSourceManager()
-                    )
-                  << std::endl;
-
-        Toks.push_back(Tok);
-        ConsumeToken();
+        parenCount--;
+        if (parenCount == 0) {
+          // We are done.
+          return Toks;
+        }
         break;
-    }
+      default:
+        ConsumeToken();
+      }
   }
 }
 
@@ -805,6 +815,16 @@ Parser::ParseExternalDeclaration(ParsedAttributes &Attrs,
   case tok::kw_REQUIRES: {
     ConsumeToken();
     auto Toks = parseREQUIRES();
+    for (auto &Tok : Toks) {
+      auto Loc = Tok.getLocation();
+      std::cout << "Token "
+                // << Tok.getLiteralData()
+                << " at position: "
+                << Loc.printToString(
+                    Actions.getASTContext().getSourceManager()
+                  )
+                << std::endl;
+    }
     printf("Parsed %i tokens in REQUIRES\n", (int)Toks.size());
     // for (auto &Tok : Toks)
     //   std::cout << Tok << " ";

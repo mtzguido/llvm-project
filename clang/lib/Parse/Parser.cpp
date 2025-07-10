@@ -817,8 +817,8 @@ Parser::ParseExternalDeclaration(ParsedAttributes &Attrs,
     auto Toks = parseREQUIRES();
     for (auto &Tok : Toks) {
       auto Loc = Tok.getLocation();
-      std::cout << "Token "
-                // << Tok.getLiteralData()
+      std::cout << "Token '" << PP.getSpelling(Tok)
+                << "' (kind: " << tok::getTokenName(Tok.getKind()) << ")"
                 << " at position: "
                 << Loc.printToString(
                     Actions.getASTContext().getSourceManager()
